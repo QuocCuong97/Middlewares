@@ -112,5 +112,14 @@
     <p align=center><img src=https://i.imgur.com/q70kc9r.png width=60%></p>
 
 ### **Cấu hình Oracle Weblogic Server 12c**
+- **B1 :** Chạy script cấu hình :
+    ```
+    $ $ORACLE_HOME/oracle_common/common/bin/config.sh
+    ```
+    <p align=center><img src=https://i.imgur.com/RJfKFvC.png width=50%></p>
 
-https://www.centlinux.com/2018/12/install-oracle-weblogic-12c-server-on-centos-7.html
+- **B2 :** Tại cửa sổ **Configuration Type**, chọn ***Create a new domain***, set domain location rồi chọn ***Next*** để tiếp tục :
+
+    <p align=center><img src=https://i.imgur.com/aCuvk4H.png width=60%></p>
+
+- **B3 :** 
