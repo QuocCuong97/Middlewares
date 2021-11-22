@@ -24,11 +24,9 @@
 - Do bộ cài đặt **Oracle Weblogic** cần cài đặt qua giao diện, vì vậy cần export display để tận dụng màn hình giao diện của host thực hiện SSH vào server. Thực hiện 2 lệnh sau :
     ```
     # yum install xhost xorg-x11-* -y
-    # export DISPLAY=192.168.5.1:0.0
     # xhost +
     access control disabled, clients can connect from any host
     ```
-    > Trong đó : `192.168.5.1` là IP của localhost.
 > ***Chú ý :*** Nên sử dụng công cụ **MobaXterm**, hoặc **PuTTY** để thực hiện SSH.
 ### **Cài đặt Oracle Weblogic Server 12c**
 - **B1 :** Download bộ cài của **Oracle WebLogic Server 12c** tại [link](https://www.oracle.com/middleware/technologies/weblogic-server-installers-downloads.html) :
@@ -61,8 +59,9 @@
     $ export WLS_HOME=$MW_HOME/wlserver
     $ export DOMAIN_BASE=$ORACLE_BASE/config/domains
     $ export DOMAIN_HOME=$DOMAIN_BASE/mydomain
-    $ 
+    $ export DISPLAY=192.168.5.1:0.0
     ```
+    > Trong đó : `192.168.5.1` là IP của localhost.
 - **B7 :** Unzip file `fmw_12.2.1.4.0_wls_lite_Disk1_1of1.zip` :
     ```
     $ cd /opt
@@ -113,3 +112,5 @@
     <p align=center><img src=https://i.imgur.com/q70kc9r.png width=60%></p>
 
 ### **Cấu hình Oracle Weblogic Server 12c**
+
+https://www.centlinux.com/2018/12/install-oracle-weblogic-12c-server-on-centos-7.html
