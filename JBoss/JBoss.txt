@@ -1,0 +1,141 @@
+----------------------------------JBOSS EAP----------------------------------------
+***) Chạy file cài đặt
+mv /swhome/jboss/jbosswas /tmp/jbosswas
+java -jar /tmp/jbosswas/jboss-eap-7.4.0-installer.jar -console
+/swhome/jboss
+
+***) Sửa file cấu hình
+vi /swhome/jboss/bin/init.d/jboss-eap.conf
+## Location of JBoss EAP
+JBOSS_HOME="/swhome/jboss"
+## The username who should own the process.
+JBOSS_USER=jboss
+## Location to keep the console log
+JBOSS_CONSOLE_LOG="/swlog/jboss/console.log"
+## Additionals args to include in startup
+JBOSS_OPTS="-b 10.191.252.93 -bmanagement 10.191.252.93"
+
+***) Tắt SELinux
+sudo setenforce 0
+sudo vi /etc/selinux/config
+SELINUX=disabled
+
+***) Tắt firewalld
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+
+***) Cấu hình service JBoss
+sudo cp /swhome/jboss/bin/init.d/jboss-eap.conf /etc/default
+sudo cp /swhome/jboss/bin/init.d/jboss-eap-rhel.sh /etc/init.d
+sudo chmod +x /etc/init.d/jboss-eap-rhel.sh
+sudo chkconfig --add jboss-eap-rhel.sh
+sudo service jboss-eap-rhel start
+sudo chkconfig jboss-eap-rhel.sh on
+
+---------------------------JBOSS WEB SERVICE---------------------------------------
+***) Giải nén bộ cài
+unzip /swhome/jboss/jbossweb/jws-5.5.0-application-server.zip -d /swhome/jboss
+unzip /swhome/jboss/jbossweb/jws-5.5.0-application-server-RHEL8-x86_64.zip -d /swhome/jboss
+mv /swhome/jboss/jws-5.5/tomcat/ /swhome/jboss/
+***) Chạy bộ cài để tạo service
+cd /swhome/jboss/tomcat
+sudo sh .postinstall.systemd
+
+***) Chỉnh sửa cấu hình logging
+sudo chmod -R 777 /swlog/jboss
+
+vi /swhome/jboss/tomcat/bin/catalina.sh
+...
+if [ -z "$CATALINA_OUT" ] ; then
+  CATALINA_OUT=/swlog/jboss/catalina.out
+fi
+...
+
+
+vi /swhome/jboss/tomcat/conf/logging.properties
+...
+1catalina.org.apache.juli.AsyncFileHandler.directory = /swlog/jboss
+...
+2localhost.org.apache.juli.AsyncFileHandler.directory = /swlog/jboss
+...
+3manager.org.apache.juli.AsyncFileHandler.directory = /swlog/jboss
+...
+4host-manager.org.apache.juli.AsyncFileHandler.directory = /swlog/jboss
+...
+
+***) Export biến môi trường
+echo "
+JAVA_HOME=/usr/bin/java
+PATH=${JAVA_HOME}/bin:$PATH 
+CLASSPATH=.:${JAVA_HOME}/lib   
+CATALINA_HOME=/swhome/jboss/tomcat" >> ~/.bash_profile
+
+. ~/.bash_profile
+
+***) Tắt firewalld
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+
+***) Tắt SELinux
+sudo setenforce 0
+sudo sed -i 's/enforcing/disabled/g' /etc/selinux/config
+reboot
+
+***) Start service
+sudo systemctl enable jws5-tomcat.service
+sudo systemctl start jws5-tomcat.service
+cd /swhome/jboss/tomcat/bin/
+./shutdown.sh
+sudo chmod -R 777 /swlog/jboss
+./startup.sh
+
+vi /swhome/jboss/tomcat/conf/server.xml
+...
+<Server port="8005" shutdown="SHUTDOWN" address="10.191.252.95">
+...
+sudo systemctl restart jws5-tomcat.service
+
+------------------------JBOSS APACHE WEB SERVER------------------------------
+***) Giải nén bộ cài
+unzip /swhome/jboss/jbcs-httpd24-httpd-2.4.37-SP6-RHEL8-x86_64.zip -d /swhome/jboss
+
+***) Chạy bộ cài để tạo service
+cd /swhome/jboss/jbcs-httpd24-2.4/httpd
+sudo ./.postinstall
+sudo chown -R jboss:app /swhome/jboss/jbcs-httpd24-2.4
+
+***) Xóa user apache
+sudo userdel apache
+
+***) Tạo folder chứa log
+mkdir /swlog/jboss/httpd
+
+***) Chỉnh sửa file cấu hình Apache Web Server
+vi /swhome/jboss/jbcs-httpd24-2.4/httpd/conf/httpd.conf
+...
+Listen 80
+...
+User jboss
+Group app
+...
+ErrorLog /swlog/jboss/httpd/error_log
+...
+CustomLog /swlog/jboss/httpd/access_log common
+...
+CustomLog /swlog/jboss/httpd/referer_log referer
+CustomLog /swlog/jboss/httpd/agent_log agent
+...
+CustomLog /swlog/jboss/httpd/access_log combined
+...
+
+***) Chỉnh sửa file cấu hình Apache Web Server
+vi /swhome/jboss/jbcs-httpd24-2.4/httpd/conf.d/ssl.conf
+...
+# Listen localhost:443
+...
+
+***) Khởi tạo service
+cd /swhome/jboss/jbcs-httpd24-2.4/httpd/sbin
+sudo ./apachectl start
+
+sudo ./apachectl -M | grep -E 'cluster_slotmem_module|manager_module|proxy_cluster_module|advertise_module'
